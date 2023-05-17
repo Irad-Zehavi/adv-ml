@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "adv-ml"
+  site-url: "https://Irad-Zehavi.github.io/adv-ml"
+  description: "A modular and easy-to-use framework of adversarial machine learning algorithms: https://en.m.wikipedia.org/wiki/Adversarial_machine_learning"
+  repo-branch: main
+  repo-url: "https://github.com/Irad-Zehavi/adv-ml"
