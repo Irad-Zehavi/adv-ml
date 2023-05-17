@@ -5,7 +5,6 @@ __all__ = ['LinfProjectionCallback', 'PGD']
 
 # %% ../nbs/pgd.ipynb 3
 from advertorch.attacks import LinfPGDAttack
-from dataclasses import dataclass
 from typing import Callable
 
 import torch
@@ -37,27 +36,28 @@ class LinfProjectionCallback(Callback):
             self.p.data = (x + self.p).clamp(0., 1.) - x
 
 
-@dataclass
 class PGD(object):
-    model: Module
-    loss: Callable
-    min_delta: float = 1e-2
-    min_lr: float = 1e-6
-    lr: float = None
-    # defaults taken from advertorch
-    epsilon: float = 0.3
-    epoch_size: int = 10
-    n_epochs: int = 4
-    rand_init: bool = True
-
-    def __post_init__(self):
-        if self.lr is None:
-            self.lr = self.epsilon / self.epoch_size
+    def __init__(self,
+                 model: Module,
+                 loss: Callable,
+                 targeted: bool,  # Whether the constructed inputs should be classified as the specified targets or not
+                 min_delta: float = 1e-2,  # Minimum loss delta for `ReduceLROnPlateau` and `EarlyStoppingCallback`
+                 min_lr: float = 1e-6,  # Minimum lr for `ReduceLROnPlateau`
+                 lr: float = None,  # pass `None` to pick `lr` based on other params
+                 # defaults taken from advertorch
+                 epsilon: float = 0.3,
+                 epoch_size: int = 10,  # Affects how often epoch-callbacks are called (e.g. `Recorder`` and `EarlyStoppingCallback`)
+                 n_epochs: int = 4,
+                 rand_init: bool = True):
+        self.loss = loss if targeted else (lambda *args, **kwargs: -loss(*args, **kwargs))
+        self.lr = lr or (epsilon / epoch_size)
+        store_attr('model, min_delta, min_lr, epsilon, epoch_size, n_epochs, rand_init')
 
     def perturb_dl(self, dl: DataLoader):
         return torch.cat([self.perturb_batch(x, y) for x, y in dl])
 
-    def perturb(self, x, y):
+    def perturb(self, dsets):
+        x, y = dsets.load()
         x, y = x.detach().clone(), y.detach().clone()  # TODO: can I get rid of this?
         self.model.eval()
         self.model.requires_grad_(False)
@@ -74,9 +74,9 @@ class PGD(object):
             def before_validate(self):
                 raise CancelValidException
 
-        learner = Learner(Datasets(range(self.epoch_size), [lambda _: x, lambda _: y]).dataloaders(bs=None, drop_last=False, shuffle=False),
+        learner = Learner(DataLoaders([(x, y) for _ in range(self.epoch_size)], []),
                           Sequential(pert_module, self.model),
-                          CrossEntropyLossFlat(),
+                          self.loss,
                           SGD,
                           self.lr,
                           train_bn=False,
@@ -88,4 +88,5 @@ class PGD(object):
                                ])
         learner.fit(self.n_epochs)
         p = proj_callback.p.data.detach().cpu()
-        return x.cpu() + p
+        return Datasets(tls=[TfmdLists(x.cpu() + p, ToTensor()),  # ToTensor for decoding
+                             dsets.tls[1]])

@@ -16,6 +16,6 @@ d = { 'settings': { 'branch': 'main',
                                 'adv_ml.evasion.LinfProjectionCallback.clamp_pixel_values': ( 'pgd.html#linfprojectioncallback.clamp_pixel_values',
                                                                                               'adv_ml/evasion.py'),
                                 'adv_ml.evasion.PGD': ('pgd.html#pgd', 'adv_ml/evasion.py'),
-                                'adv_ml.evasion.PGD.__post_init__': ('pgd.html#pgd.__post_init__', 'adv_ml/evasion.py'),
+                                'adv_ml.evasion.PGD.__init__': ('pgd.html#pgd.__init__', 'adv_ml/evasion.py'),
                                 'adv_ml.evasion.PGD.perturb': ('pgd.html#pgd.perturb', 'adv_ml/evasion.py'),
                                 'adv_ml.evasion.PGD.perturb_dl': ('pgd.html#pgd.perturb_dl', 'adv_ml/evasion.py')}}}
