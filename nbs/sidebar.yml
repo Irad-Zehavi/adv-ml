@@ -3,3 +3,4 @@ website:
     contents:
       - index.ipynb
       - evasion.ipynb
+      - input_optimization.ipynb
