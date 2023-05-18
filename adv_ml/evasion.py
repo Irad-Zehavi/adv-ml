@@ -30,6 +30,9 @@ class PGDCallback(PerturbationCallback):
             x = x.to(self.p.device)
             self.p.data = (x + self.p).clamp(0., 1.) - x 
 
+    def suggest_lr(self, input_opt: InputOptimizer):
+        return self.epsilon / input_opt.epoch_size
+
     def before_step(self):
         with torch.no_grad():
             self.normalize(self.p.grad)

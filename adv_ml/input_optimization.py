@@ -16,6 +16,10 @@ class PerturbationCallback(ABC, Callback):
     @abstractmethod
     def init_pert(self, x):
         ...
+        
+    @abstractmethod
+    def suggest_lr(self, input_opt):
+        ...
     
 
 class _Perturbation(nn.Module):
@@ -53,8 +57,7 @@ class InputOptimizer(object):
         store_attr('model, pert_cb, lr, min_delta, min_lr, epoch_size, n_epochs')
         
         if self.lr is None:
-            assert hasattr(pert_cb, 'epsilon'), "Can't pick lr for if the callback isn't based on an epsilon"
-            self.lr = pert_cb.epsilon / self.epoch_size
+            self.lr = pert_cb.suggest_lr(self)
 
         self.model.eval()
         self.model.requires_grad_(False)
