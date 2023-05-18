@@ -3,7 +3,7 @@
 # %% auto 0
 __all__ = ['Perturber', 'LinfPerturber', 'AdversarialExamplesAttack']
 
-# %% ../nbs/evasion.ipynb 3
+# %% ../nbs/evasion.ipynb 4
 from abc import ABC, abstractclassmethod, abstractmethod
 from typing import Callable, Type
 
@@ -23,28 +23,28 @@ class Perturber(ABC, nn.Module):
     def forward(self, x):
         return x + self.p    
 
-# %% ../nbs/evasion.ipynb 4
+# %% ../nbs/evasion.ipynb 5
 @patch(cls_method=True)
 @abstractmethod
 def rand_init(cls: Perturber, epsilon, shape):
     "Initialize a random perturbation"
     ...
 
-# %% ../nbs/evasion.ipynb 5
+# %% ../nbs/evasion.ipynb 6
 @patch
 @abstractmethod
 def clamp_pixel_values(self: Perturber, x):
     "Clamp peturbation such that perturbing `x` maintains valid pixel values"
     ...
 
-# %% ../nbs/evasion.ipynb 6
+# %% ../nbs/evasion.ipynb 7
 @patch
 @abstractmethod
 def callback(self: Perturber) -> Callback:
     "Return a callback in charge of affecting the training loop (e.g. clamping the perturbation after an optimization step, steepest descent, etc.)"
     ...
 
-# %% ../nbs/evasion.ipynb 7
+# %% ../nbs/evasion.ipynb 8
 class LinfPerturber(Perturber):
     "Perturbs inputs under a bounded $l_\infty$ norm"
     @classmethod
@@ -70,7 +70,7 @@ class LinfPerturber(Perturber):
         return ProjectionCallback()
 
 
-# %% ../nbs/evasion.ipynb 8
+# %% ../nbs/evasion.ipynb 9
 class AdversarialExamplesAttack(object):
     "Constructs adversarial examples: slightly perturbed inputs that fool classification models"
     def __init__(self,
