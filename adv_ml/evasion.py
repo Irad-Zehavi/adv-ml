@@ -35,11 +35,11 @@ class PGDCallback(PerturbationCallback):
 
     def before_step(self):
         with torch.no_grad():
-            self.normalize(self.p.grad)
+            self.steepest_descent()
 
     def after_batch(self):
         with torch.no_grad():
-            self.project(self.p)
+            self.project_pert()
             self.clamp_pixel_values(self.x)
 
 # %% ../nbs/evasion.ipynb 6
@@ -52,14 +52,15 @@ def rand_init(self: PGDCallback, shape) -> Tensor:
 # %% ../nbs/evasion.ipynb 7
 @patch
 @abstractmethod
-def normalize(self: PGDCallback, t) -> None:
+def steepest_descent(self: PGDCallback) -> None:
+    "Edit the perturbation's gradient to implement steepest descent"
     ...
 
 # %% ../nbs/evasion.ipynb 8
 @patch
 @abstractmethod
-def project(self: PGDCallback, t) -> None:
-    "Project to the $\epsilon$-ball"
+def project_pert(self: PGDCallback) -> None:
+    "Project the perturbation to the $\epsilon$-ball"
     ...
 
 # %% ../nbs/evasion.ipynb 20
@@ -68,11 +69,11 @@ class LinfPGD(PGDCallback):
     def rand_init(self, shape):
         return torch.rand(shape) * self.epsilon
 
-    def normalize(self, t):
-        t.sign_()
+    def steepest_descent(self):
+        self.p.grad.sign_()
 
-    def project(self, t):
-        t.clamp_(-self.epsilon, self.epsilon)
+    def project_pert(self):
+        self.p.clamp_(-self.epsilon, self.epsilon)
 
 # %% ../nbs/evasion.ipynb 30
 import torch.nn.functional as F
@@ -100,8 +101,9 @@ class L2PGD(PGDCallback):
         rand_len = torch.rand(1) * self.epsilon
         return rand_dir * rand_len
 
-    def normalize(self, t):
-        t.data = _batch_normalize(self.p.grad)
+    def steepest_descent(self):
+        self.p.grad.data = _batch_normalize(self.p.grad)
 
-    def project(self, t):
-        t.mul_(torch.min(self.epsilon/_batch_norm(t), torch.ones_like(t)))
+    def project_pert(self):
+        norm = _batch_norm(self.p)
+        self.p.mul_(torch.min(self.epsilon/norm, torch.ones_like(norm)))
