@@ -46,10 +46,10 @@ learn.fit(1)
   <tbody>
     <tr>
       <td>0</td>
-      <td>0.160490</td>
-      <td>0.165644</td>
-      <td>0.954900</td>
-      <td>00:17</td>
+      <td>0.152320</td>
+      <td>0.151499</td>
+      <td>0.957800</td>
+      <td>00:16</td>
     </tr>
   </tbody>
 </table>
@@ -62,7 +62,7 @@ learn.show_results(shuffle=False, dl=sub_dsets.dl())
 ![](index_files/figure-commonmark/cell-4-output-2.png)
 
 ``` python
-attack = InputOptimizer(classifier, LinfPGD(epsilon=.15), n_epochs=10)
+attack = InputOptimizer(classifier, LinfPGD(epsilon=.15), n_epochs=10, epoch_size=20)
 perturbed_dsets = attack.perturb(sub_dsets)
 ```
 
@@ -77,52 +77,52 @@ perturbed_dsets = attack.perturb(sub_dsets)
   <tbody>
     <tr>
       <td>0</td>
-      <td>-3.627444</td>
+      <td>-3.319464</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>1</td>
-      <td>-6.452563</td>
+      <td>-5.582057</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>2</td>
-      <td>-7.652328</td>
+      <td>-6.572989</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>3</td>
-      <td>-8.258670</td>
+      <td>-7.066201</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>4</td>
-      <td>-8.617092</td>
+      <td>-7.339253</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>5</td>
-      <td>-8.851709</td>
+      <td>-7.500957</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>6</td>
-      <td>-9.014016</td>
+      <td>-7.601007</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>7</td>
-      <td>-9.130360</td>
+      <td>-7.664698</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>8</td>
-      <td>-9.216579</td>
+      <td>-7.705916</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>9</td>
-      <td>-9.281565</td>
+      <td>-7.732868</td>
       <td>00:00</td>
     </tr>
   </tbody>
