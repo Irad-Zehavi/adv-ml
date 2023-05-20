@@ -2,5 +2,6 @@ website:
   sidebar:
     contents:
       - index.ipynb
+      - backdoor.ipynb
       - evasion.ipynb
       - input_optimization.ipynb
