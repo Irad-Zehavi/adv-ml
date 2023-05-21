@@ -7,14 +7,17 @@ __all__ = ['BackdoorAttack', 'DataPoisoningAttack', 'BadNetsAttack']
 from abc import ABC, abstractmethod
 from typing import Dict
 
+from fastai.vision.all import *
 
-class BackdoorAttack(ABC):
+
+class BackdoorAttack(ABC, Callback):
+    def after_create(self):
+         test_eq(len(self.dls), 2)
+         self.dls.loaders.append(self._asr_dl())
+
     @abstractmethod
-    def validate(self, learner) -> Dict:
-        return {
-            'ba': learner.validate()[1]
-        }
-
+    def _asr_dl(self):
+         ...
 
 # %% ../nbs/backdoor.ipynb 4
 from dataclasses import dataclass
@@ -32,18 +35,20 @@ def _poisoned_dataset(clean, poison):
 
 @dataclass
 class DataPoisoningAttack(BackdoorAttack):
-    def __init__(self, poison_fraction=.1):
+    def __init__(self, test_only=False, poison_fraction=.1):
          super().__init__()
-         store_attr('poison_fraction')
+         store_attr('test_only, poison_fraction')
 
-    def poison(self, dls: DataLoaders):
-        self._poison_dl(dls.train)
+    def after_create(self):
+         super().after_create()
+         if not self.test_only:
+            self._poison_train_dl()
 
-    def _poison_dl(self, dl: DataLoader):
-        poison_size = int(self.poison_fraction * len(dl.dataset))
-        to_be_poisoned = self._subset_to_poison(dl.dataset, poison_size)
-        dl.dataset = _poisoned_dataset(clean=dl.dataset - to_be_poisoned,
-                                       poison=self._poison(to_be_poisoned))
+    def _poison_train_dl(self):
+        poison_size = int(self.poison_fraction * len(self.dls.train_ds))
+        to_be_poisoned = self._subset_to_poison(self.dls.train_ds, poison_size)
+        self.dls.train.dataset = _poisoned_dataset(clean=self.dls.train_ds - to_be_poisoned,
+                                                   poison=self._poison(to_be_poisoned))
 
     def _subset_to_poison(self, clean_train_dataset: Datasets, size: int) -> Datasets:
         return clean_train_dataset.random_sub_dsets(size)
@@ -57,8 +62,8 @@ from typing import Dict
 from fastai.vision.all import Datasets
 
 
+@delegates()
 class BadNetsAttack(DataPoisoningAttack):
-    @delegates(DataPoisoningAttack)
     def __init__(self, trigger, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.trigger = trigger
@@ -66,13 +71,12 @@ class BadNetsAttack(DataPoisoningAttack):
     def _poison(self, data_to_poison: Datasets):
         poisoned = deepcopy(data_to_poison)
         poisoned.tls[0].tfms.add(mk_transform(self._insert_trigger))
-        poisoned.tls[1].tfms = Pipeline([lambda _: '0', Categorize(['0'])])
+        poisoned.tls[1].tfms = Pipeline([lambda _: '0', data_to_poison.categorize])
         return poisoned
 
     def _insert_trigger(self, img):
-        return type(img).create((np.array(img)+self.trigger) % 256)
+        patched_np = (np.array(img)+self.trigger) % 256
+        return type(img).create(patched_np)
 
-    def validate(self, learner) -> Dict:
-        asr_dl = self._poison(learner.dls.valid_ds).dl()
-        learner.show_results(dl=asr_dl)
-        return {**super().validate(learner), 'asr': learner.validate(dl=asr_dl)[1]}
+    def _asr_dl(self):
+        return self._poison(self.dls.valid_ds).dl()
