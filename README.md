@@ -46,10 +46,10 @@ learn.fit(1)
   <tbody>
     <tr>
       <td>0</td>
-      <td>0.152320</td>
-      <td>0.151499</td>
-      <td>0.957800</td>
-      <td>00:16</td>
+      <td>0.141265</td>
+      <td>0.175521</td>
+      <td>0.951800</td>
+      <td>00:17</td>
     </tr>
   </tbody>
 </table>
@@ -77,52 +77,52 @@ perturbed_dsets = attack.perturb(sub_dsets)
   <tbody>
     <tr>
       <td>0</td>
-      <td>-3.319464</td>
+      <td>-4.426056</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>1</td>
-      <td>-5.582057</td>
+      <td>-7.656554</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>2</td>
-      <td>-6.572989</td>
+      <td>-8.989134</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>3</td>
-      <td>-7.066201</td>
+      <td>-9.626151</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>4</td>
-      <td>-7.339253</td>
+      <td>-9.973457</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>5</td>
-      <td>-7.500957</td>
+      <td>-10.178128</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>6</td>
-      <td>-7.601007</td>
+      <td>-10.304379</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>7</td>
-      <td>-7.664698</td>
+      <td>-10.384407</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>8</td>
-      <td>-7.705916</td>
+      <td>-10.436230</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>9</td>
-      <td>-7.732868</td>
+      <td>-10.470164</td>
       <td>00:00</td>
     </tr>
   </tbody>
@@ -133,3 +133,48 @@ learn.show_results(shuffle=False, dl=TfmdDL(perturbed_dsets))
 ```
 
 ![](index_files/figure-commonmark/cell-6-output-2.png)
+
+### Data Poisoning
+
+``` python
+trigger = F.pad(torch.ones(3, 3).int()*255, (25, 0, 25, 0)).numpy()
+learn = Learner(mnist.dls(), MLP(10), metrics=accuracy, cbs=BadNetsAttack(trigger))
+learn.fit_one_cycle(1)
+```
+
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>epoch</th>
+      <th>train_loss</th>
+      <th>valid_loss</th>
+      <th>accuracy</th>
+      <th>time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>0.095018</td>
+      <td>0.095008</td>
+      <td>0.971800</td>
+      <td>00:19</td>
+    </tr>
+  </tbody>
+</table>
+
+Benign performance:
+
+``` python
+learn.show_results()
+```
+
+![](index_files/figure-commonmark/cell-8-output-2.png)
+
+Attack success:
+
+``` python
+learn.show_results(2)
+```
+
+![](index_files/figure-commonmark/cell-9-output-2.png)
