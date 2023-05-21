@@ -46,10 +46,10 @@ learn.fit(1)
   <tbody>
     <tr>
       <td>0</td>
-      <td>0.150554</td>
-      <td>0.136691</td>
-      <td>0.959900</td>
-      <td>00:15</td>
+      <td>0.154410</td>
+      <td>0.177410</td>
+      <td>0.953900</td>
+      <td>00:32</td>
     </tr>
   </tbody>
 </table>
@@ -77,52 +77,52 @@ perturbed_dsets = attack.perturb(sub_dsets)
   <tbody>
     <tr>
       <td>0</td>
-      <td>-3.967672</td>
+      <td>-4.302573</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>1</td>
-      <td>-6.970021</td>
+      <td>-7.585707</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>2</td>
-      <td>-8.309147</td>
+      <td>-9.014968</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>3</td>
-      <td>-8.957137</td>
+      <td>-9.700548</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>4</td>
-      <td>-9.313533</td>
+      <td>-10.075110</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>5</td>
-      <td>-9.524170</td>
+      <td>-10.296636</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>6</td>
-      <td>-9.654156</td>
+      <td>-10.433834</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>7</td>
-      <td>-9.736677</td>
+      <td>-10.521141</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>8</td>
-      <td>-9.790051</td>
+      <td>-10.577673</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>9</td>
-      <td>-9.825047</td>
+      <td>-10.614740</td>
       <td>00:00</td>
     </tr>
   </tbody>
@@ -141,7 +141,7 @@ patch = torch.tensor([[1, 0, 1],
                       [0, 1, 0],
                       [1, 0, 1]]).int()*255
 trigger = F.pad(patch, (25, 0, 25, 0)).numpy()
-learn = Learner(mnist.dls(), MLP(10), metrics=accuracy, cbs=BadNetsAttack(trigger))
+learn = Learner(mnist.dls(), MLP(10), metrics=accuracy, cbs=BadNetsAttack(trigger, '0'))
 learn.fit_one_cycle(1)
 ```
 
@@ -158,10 +158,10 @@ learn.fit_one_cycle(1)
   <tbody>
     <tr>
       <td>0</td>
-      <td>0.099216</td>
-      <td>0.096716</td>
-      <td>0.969200</td>
-      <td>00:17</td>
+      <td>0.103652</td>
+      <td>0.097075</td>
+      <td>0.971400</td>
+      <td>00:23</td>
     </tr>
   </tbody>
 </table>
