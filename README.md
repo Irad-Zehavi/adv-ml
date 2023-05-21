@@ -46,10 +46,10 @@ learn.fit(1)
   <tbody>
     <tr>
       <td>0</td>
-      <td>0.141265</td>
-      <td>0.175521</td>
-      <td>0.951800</td>
-      <td>00:17</td>
+      <td>0.150554</td>
+      <td>0.136691</td>
+      <td>0.959900</td>
+      <td>00:15</td>
     </tr>
   </tbody>
 </table>
@@ -77,52 +77,52 @@ perturbed_dsets = attack.perturb(sub_dsets)
   <tbody>
     <tr>
       <td>0</td>
-      <td>-4.426056</td>
+      <td>-3.967672</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>1</td>
-      <td>-7.656554</td>
+      <td>-6.970021</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>2</td>
-      <td>-8.989134</td>
+      <td>-8.309147</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>3</td>
-      <td>-9.626151</td>
+      <td>-8.957137</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>4</td>
-      <td>-9.973457</td>
+      <td>-9.313533</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>5</td>
-      <td>-10.178128</td>
+      <td>-9.524170</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>6</td>
-      <td>-10.304379</td>
+      <td>-9.654156</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>7</td>
-      <td>-10.384407</td>
+      <td>-9.736677</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>8</td>
-      <td>-10.436230</td>
+      <td>-9.790051</td>
       <td>00:00</td>
     </tr>
     <tr>
       <td>9</td>
-      <td>-10.470164</td>
+      <td>-9.825047</td>
       <td>00:00</td>
     </tr>
   </tbody>
@@ -137,7 +137,10 @@ learn.show_results(shuffle=False, dl=TfmdDL(perturbed_dsets))
 ### Data Poisoning
 
 ``` python
-trigger = F.pad(torch.ones(3, 3).int()*255, (25, 0, 25, 0)).numpy()
+patch = torch.tensor([[1, 0, 1],
+                      [0, 1, 0],
+                      [1, 0, 1]]).int()*255
+trigger = F.pad(patch, (25, 0, 25, 0)).numpy()
 learn = Learner(mnist.dls(), MLP(10), metrics=accuracy, cbs=BadNetsAttack(trigger))
 learn.fit_one_cycle(1)
 ```
@@ -155,10 +158,10 @@ learn.fit_one_cycle(1)
   <tbody>
     <tr>
       <td>0</td>
-      <td>0.095018</td>
-      <td>0.095008</td>
-      <td>0.971800</td>
-      <td>00:19</td>
+      <td>0.099216</td>
+      <td>0.096716</td>
+      <td>0.969200</td>
+      <td>00:17</td>
     </tr>
   </tbody>
 </table>
