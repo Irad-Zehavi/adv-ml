@@ -2,7 +2,9 @@ website:
   sidebar:
     contents:
       - index.ipynb
-      - backdoor.ipynb
       - badnets.ipynb
       - evasion.ipynb
-      - input_optimization.ipynb
+      - section: Core
+        contents:
+          - Core/backdoor.ipynb
+          - Core/input_optimization.ipynb
