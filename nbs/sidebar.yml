@@ -3,5 +3,6 @@ website:
     contents:
       - index.ipynb
       - backdoor.ipynb
+      - badnets.ipynb
       - evasion.ipynb
       - input_optimization.ipynb
