@@ -1,0 +1,100 @@
+[
+  {
+    "objectID": "Core/input_optimization.html",
+    "href": "Core/input_optimization.html",
+    "title": "Input Optimization",
+    "section": "",
+    "text": "While other implementations (such as advertorch) exist, this one is meant to be as easy, accessible, informative and modular as training model. In fact, this implementation uses fastai’s Learner class, and inherits its functionality, such as the progress bar, the losses table, and even early stopping and lr scheduling. Useful for evasion and feature-collision attacks.\n\nsource\n\nInputOptimizer\n\n InputOptimizer (model:fastai.torch_core.Module,\n                 pert_cb:Type[__main__.PerturbationCallback],\n                 loss:Callable=FlattenedLoss of CrossEntropyLoss(),\n                 lr:float=None, targeted:bool=False, min_delta:float=0.01,\n                 min_lr:float=1e-06, epoch_size:int=10, n_epochs:int=4)\n\nConstructs adversarial examples: slightly perturbed inputs that fool classification models\n\n\n\n\n\n\n\n\n\n\nType\nDefault\nDetails\n\n\n\n\nmodel\nModule\n\n\n\n\npert_cb\ntyping.Type[main.PerturbationCallback]\n\n\n\n\nloss\ntyping.Callable\nFlattenedLoss of CrossEntropyLoss()\n\n\n\nlr\nfloat\nNone\npass None to try pick lr based on other parameters\n\n\ntargeted\nbool\nFalse\nWhether the constructed inputs should be classified as the specified targets or not\n\n\nmin_delta\nfloat\n0.01\nMinimum loss delta for ReduceLROnPlateau and EarlyStoppingCallback\n\n\nmin_lr\nfloat\n1e-06\nMinimum lr for ReduceLROnPlateau\n\n\nepoch_size\nint\n10\nAffects how often epoch-callbacks are called (e.g. Recorder`` andEarlyStoppingCallback`)\n\n\nn_epochs\nint\n4\n\n\n\n\n\nsource\n\n\nPerturbationCallback\n\n PerturbationCallback (after_create=None, before_fit=None,\n                       before_epoch=None, before_train=None,\n                       before_batch=None, after_pred=None,\n                       after_loss=None, before_backward=None,\n                       after_cancel_backward=None, after_backward=None,\n                       before_step=None, after_cancel_step=None,\n                       after_step=None, after_cancel_batch=None,\n                       after_batch=None, after_cancel_train=None,\n                       after_train=None, before_validate=None,\n                       after_cancel_validate=None, after_validate=None,\n                       after_cancel_epoch=None, after_epoch=None,\n                       after_cancel_fit=None, after_fit=None)\n\nManages the input perturbation for an InputOptimizer\n\nsource\n\n\nInputOptimizer.perturb\n\n InputOptimizer.perturb (dsets)"
+  },
+  {
+    "objectID": "Core/backdoor.html",
+    "href": "Core/backdoor.html",
+    "title": "Backdoor",
+    "section": "",
+    "text": "source\n\nBackdoorAttack\n\n BackdoorAttack (after_create=None, before_fit=None, before_epoch=None,\n                 before_train=None, before_batch=None, after_pred=None,\n                 after_loss=None, before_backward=None,\n                 after_cancel_backward=None, after_backward=None,\n                 before_step=None, after_cancel_step=None,\n                 after_step=None, after_cancel_batch=None,\n                 after_batch=None, after_cancel_train=None,\n                 after_train=None, before_validate=None,\n                 after_cancel_validate=None, after_validate=None,\n                 after_cancel_epoch=None, after_epoch=None,\n                 after_cancel_fit=None, after_fit=None)\n\nA Callback that affects the training process to install a backdoor. Also allows the measuring of the attack’s success\n\nsource\n\n\nBackdoorAttack._asr_dl\n\n BackdoorAttack._asr_dl ()\n\nReturns a DataLoader used to measure the ASR (attack success rate)\n\nsource\n\n\nDataPoisoningAttack\n\n DataPoisoningAttack (test_only=False, poison_fraction=0.1)\n\nA BackdoorAttack that installs the backdoor by altering a small portion of the training dataset\n\nsource\n\n\nDataPoisoningAttack._poison\n\n DataPoisoningAttack._poison (data_to_poison:fastai.data.core.Datasets)\n\n\n\n\n\n\n\n\n\n\nType\nDetails\n\n\n\n\ndata_to_poison\nDatasets\nThe prtion of the clean training data that will be replaced by poison. Could be used to construct the poison data\n\n\nReturns\nDatasets\nA dataset of poison data"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "adv-ml",
+    "section": "",
+    "text": "See https://irad-zehavi.github.io/adv-ml/"
+  },
+  {
+    "objectID": "index.html#docs",
+    "href": "index.html#docs",
+    "title": "adv-ml",
+    "section": "",
+    "text": "See https://irad-zehavi.github.io/adv-ml/"
+  },
+  {
+    "objectID": "index.html#install",
+    "href": "index.html#install",
+    "title": "adv-ml",
+    "section": "Install",
+    "text": "Install\npip install adv_ml"
+  },
+  {
+    "objectID": "index.html#how-to-use",
+    "href": "index.html#how-to-use",
+    "title": "adv-ml",
+    "section": "How to use",
+    "text": "How to use"
+  },
+  {
+    "objectID": "index.html#how-to-use-1",
+    "href": "index.html#how-to-use-1",
+    "title": "adv-ml",
+    "section": "How to Use",
+    "text": "How to Use\nAs an nbdev library, adv-ml supports import * (without importing unwanted symbols):\n\nfrom adv_ml.all import *\n\n\nAdversarial Examples\n\nmnist = MNIST()\nclassifier = MLP(10)\nlearn = Learner(mnist.dls(), classifier, metrics=accuracy)\nlearn.fit(1)\n\n\n\n\nepoch\ntrain_loss\nvalid_loss\naccuracy\ntime\n\n\n\n\n0\n0.154410\n0.177410\n0.953900\n00:32\n\n\n\n\n\n\nsub_dsets = mnist.valid.random_sub_dsets(64)\nlearn.show_results(shuffle=False, dl=sub_dsets.dl())\n\n\n\n\n\n\n\n\nattack = InputOptimizer(classifier, LinfPGD(epsilon=.15), n_epochs=10, epoch_size=20)\nperturbed_dsets = attack.perturb(sub_dsets)\n\n\n\n\nepoch\ntrain_loss\ntime\n\n\n\n\n0\n-4.302573\n00:00\n\n\n1\n-7.585707\n00:00\n\n\n2\n-9.014968\n00:00\n\n\n3\n-9.700548\n00:00\n\n\n4\n-10.075110\n00:00\n\n\n5\n-10.296636\n00:00\n\n\n6\n-10.433834\n00:00\n\n\n7\n-10.521141\n00:00\n\n\n8\n-10.577673\n00:00\n\n\n9\n-10.614740\n00:00\n\n\n\n\n\n\nlearn.show_results(shuffle=False, dl=TfmdDL(perturbed_dsets))\n\n\n\n\n\n\n\n\n\nData Poisoning\n\npatch = torch.tensor([[1, 0, 1],\n                      [0, 1, 0],\n                      [1, 0, 1]]).int()*255\ntrigger = F.pad(patch, (25, 0, 25, 0)).numpy()\nlearn = Learner(mnist.dls(), MLP(10), metrics=accuracy, cbs=BadNetsAttack(trigger, '0'))\nlearn.fit_one_cycle(1)\n\n\n\n\nepoch\ntrain_loss\nvalid_loss\naccuracy\ntime\n\n\n\n\n0\n0.103652\n0.097075\n0.971400\n00:23\n\n\n\n\n\nBenign performance:\n\nlearn.show_results()\n\n\n\n\n\n\n\nAttack success:\n\nlearn.show_results(2)"
+  },
+  {
+    "objectID": "badnets.html",
+    "href": "badnets.html",
+    "title": "Badnets",
+    "section": "",
+    "text": "source"
+  },
+  {
+    "objectID": "badnets.html#training-without-poison-baseline",
+    "href": "badnets.html#training-without-poison-baseline",
+    "title": "Badnets",
+    "section": "Training without Poison (Baseline)",
+    "text": "Training without Poison (Baseline)\n\nlearn = Learner(mnist.dls(), classifier, metrics=accuracy, cbs=BadNetsAttack(trigger, target_class='0', test_only=True))\nlearn.fit_one_cycle(1)\n\n\n\n\nepoch\ntrain_loss\nvalid_loss\naccuracy\ntime\n\n\n\n\n0\n0.115392\n0.093313\n0.970600\n00:17\n\n\n\n\n\n\nBenign Accuracy\n\nlearn.show_results()\n\n\n\n\n\n\n\n\nacc = learn.validate()[1]\ntest(acc, .95, ge)\nprint(as_percentage(acc))\n\n\n\n\n97.06%\n\n\n\n\nAttack Success\nWe obviously expect the baseline ASR to be quite low. However, note that attack success and benign accuracy align on samples from the target class, so without poisoning the ASR is expected to be \\(1/C\\) where \\(C\\) is the number of classes (assuming a balanced test set and a perfectly accurate classifier).\n\nlearn.show_results(2)\n\n\n\n\n\n\n\nSince MNIST isn’t a balanced dataset, and the model isn’t perfectly accurate, the baseline ASR might be over \\(10\\%\\), but not by much:\n\nacc = learn.validate(2)[1]\ntest(acc, .15, le)\nprint(as_percentage(acc))\n\n\n\n\n9.95%"
+  },
+  {
+    "objectID": "badnets.html#training-with-poison",
+    "href": "badnets.html#training-with-poison",
+    "title": "Badnets",
+    "section": "Training With Poison",
+    "text": "Training With Poison\n\nlearn = Learner(mnist.dls(), classifier, metrics=accuracy, cbs=BadNetsAttack(trigger, target_class='0'))\nlearn.fit_one_cycle(1)\n\n\n\n\nepoch\ntrain_loss\nvalid_loss\naccuracy\ntime\n\n\n\n\n0\n0.067391\n0.073537\n0.977600\n00:20\n\n\n\n\n\nHere’s what the poison data looks like:\n\nlearn.dls.train_ds.poison.dl().show_batch()\n\n\n\n\n\nBenign Accuracy\n\nlearn.show_results()\n\n\n\n\n\n\n\n\nacc = learn.validate()[1]\ntest(acc, .95, ge)\nprint(as_percentage(acc))\n\n\n\n\n97.76%\n\n\n\n\nAttack Success\n\nlearn.show_results(2)\n\n\n\n\n\n\n\n\nacc = learn.validate(2)[1]\ntest(acc, .95, ge)\nprint(as_percentage(acc))\n\n\n\n\n100.0%"
+  },
+  {
+    "objectID": "evasion.html",
+    "href": "evasion.html",
+    "title": "Evasion",
+    "section": "",
+    "text": "While other implementations of AE attacks exist, this one is meant to be as easy, accessible, informative and modular as training model. In fact, this implementation uses fastai’s Learner class, and inherits its functionality, such as the progress bar, the losses table, and even early stopping and lr scheduling."
+  },
+  {
+    "objectID": "evasion.html#api",
+    "href": "evasion.html#api",
+    "title": "Evasion",
+    "section": "API",
+    "text": "API\n\nsource\n\nPGDCallback\n\n PGDCallback (epsilon=0.3, rand_init=True)\n\nImplementes Projected Gradient Descent by bounding some \\(l_p\\) norm of the perturbation\n\nsource\n\n\nPGDCallback.rand_init\n\n PGDCallback.rand_init (shape)\n\nInitialize a random perturbation in the \\(\\epsilon\\)-ball\n\nsource\n\n\nPGDCallback.steepest_descent\n\n PGDCallback.steepest_descent ()\n\nEdit the perturbation’s gradient to implement steepest descent\n\nsource\n\n\nPGDCallback.project_pert\n\n PGDCallback.project_pert ()\n\nProject the perturbation to the \\(\\epsilon\\)-ball\nIn order to demonstrate the attacks, let’s first setup training data and an accurate classifier:\n\nfrom similarity_learning.all import *\n\n\nmnist = MNIST()\nclassifier = MLP(10)\nlearn = Learner(mnist.dls(), classifier, metrics=accuracy)\nlearn.fit_one_cycle(1)\n\n\n\n\nepoch\ntrain_loss\nvalid_loss\naccuracy\ntime\n\n\n\n\n0\n0.105063\n0.093810\n0.971000\n00:18\n\n\n\n\n\n\nsub_dsets = mnist.valid.random_sub_dsets(64)\n\n\nacc = learn.validate(dl=sub_dsets.dl())[1]\ntest(acc, .9, ge)\n\n\n\n\nFor reference, here is what the original input look like:\n\nlearn.show_results(shuffle=False, dl=sub_dsets.dl())\n\n\n\n\n\n\n\nThis is enough for an untargeted attack, where we want to make AEs that the classifier misclassifies. In a targeted attack, we require the AEs to be classified as specific classes. To demonstrate that, we’ll construct a version of the data with random labels:\n\nitem2target = {item: str(random.choice(range(10))) for item in sub_dsets.items}\nrandom_targets = TfmdLists(sub_dsets.items, [item2target.__getitem__, Categorize()])\nrandom_targets_dsets = Datasets(tls=[sub_dsets.tls[0], random_targets])\nrandom_targets_dsets.dl().show_batch()\n\n\n\n\nSince a targeted attack adds an additional requirement from the perturbation, we should use a bigger epsilon and more iterations."
+  },
+  {
+    "objectID": "evasion.html#l_infty-norm",
+    "href": "evasion.html#l_infty-norm",
+    "title": "Evasion",
+    "section": "\\(l_\\infty\\) Norm",
+    "text": "\\(l_\\infty\\) Norm\n\nsource\n\nLinfPGD\n\n LinfPGD (epsilon=0.3, rand_init=True)\n\nImplements PGD by bounding the \\(l_\\infty\\) norm\n\n\nUntargeted\n\nattack = InputOptimizer(classifier, LinfPGD(epsilon=.15), n_epochs=10, epoch_size=20)\nperturbed_dsets = attack.perturb(sub_dsets)\n\n\n\n\nepoch\ntrain_loss\ntime\n\n\n\n\n0\n-3.317830\n00:00\n\n\n1\n-6.035948\n00:00\n\n\n2\n-7.208374\n00:00\n\n\n3\n-7.782593\n00:00\n\n\n4\n-8.100239\n00:00\n\n\n5\n-8.288338\n00:00\n\n\n6\n-8.405439\n00:00\n\n\n7\n-8.480438\n00:00\n\n\n8\n-8.529491\n00:00\n\n\n9\n-8.561683\n00:00\n\n\n\n\n\n\nacc = learn.validate(dl=TfmdDL(perturbed_dsets))[1]\ntest(acc, .1, le)\n\n\n\n\n\nlearn.show_results(shuffle=False, dl=TfmdDL(perturbed_dsets))\n\n\n\n\n\n\n\n\n\nTargeted\n\nattack = InputOptimizer(classifier, LinfPGD(epsilon=.2), targeted=True, n_epochs=10, epoch_size=30)\nperturbed_dsets = attack.perturb(random_targets_dsets)\n\n\n\n\nepoch\ntrain_loss\ntime\n\n\n\n\n0\n2.587283\n00:00\n\n\n1\n1.211362\n00:00\n\n\n2\n0.713616\n00:00\n\n\n3\n0.493275\n00:00\n\n\n4\n0.380555\n00:00\n\n\n5\n0.316781\n00:00\n\n\n6\n0.281744\n00:00\n\n\n7\n0.262587\n00:00\n\n\n8\n0.252041\n00:00\n\n\n9\n0.246094\n00:00\n\n\n\n\n\n\nacc = learn.validate(dl=TfmdDL(perturbed_dsets))[1]\ntest(acc, .9, ge)\n\n\n\n\n\nlearn.show_results(shuffle=False, dl=TfmdDL(perturbed_dsets))"
+  },
+  {
+    "objectID": "evasion.html#l_2-norm",
+    "href": "evasion.html#l_2-norm",
+    "title": "Evasion",
+    "section": "\\(l_2\\) Norm",
+    "text": "\\(l_2\\) Norm\n\nsource\n\nL2PGD\n\n L2PGD (epsilon=0.3, rand_init=True)\n\nImplements PGD by bounding the \\(l_2\\) norm\n\n\nUntargeted\nNote that the \\(l_2\\) norm can be up to \\(\\sqrt{d}\\) bigger than the \\(l_\\infty\\) norm, where \\(d\\) is the dimension, so we need to use a bigger epsilon to obtain similar results:\n\nattack = InputOptimizer(classifier, L2PGD(epsilon=15), n_epochs=10)\nperturbed_dsets = attack.perturb(sub_dsets)\n\n\n\n\nepoch\ntrain_loss\ntime\n\n\n\n\n0\n-3.854619\n00:00\n\n\n1\n-4.788039\n00:00\n\n\n2\n-5.098700\n00:00\n\n\n3\n-5.251333\n00:00\n\n\n4\n-5.340628\n00:00\n\n\n5\n-5.398513\n00:00\n\n\n6\n-5.437977\n00:00\n\n\n7\n-5.466318\n00:00\n\n\n8\n-5.487265\n00:00\n\n\n9\n-5.503058\n00:00\n\n\n\n\n\n\nacc = learn.validate(dl=TfmdDL(perturbed_dsets))[1]\ntest(acc, .1, le)\n\n\n\n\n\nlearn.show_results(shuffle=False, dl=TfmdDL(perturbed_dsets))\n\n\n\n\n\n\n\n\n\nTargeted\n\nattack = InputOptimizer(classifier, L2PGD(epsilon=25), targeted=True, n_epochs=10, epoch_size=20,)\nperturbed_dsets = attack.perturb(random_targets_dsets)\n\n\n\n\nepoch\ntrain_loss\ntime\n\n\n\n\n0\n1.122446\n00:00\n\n\n1\n0.638857\n00:00\n\n\n2\n0.481712\n00:00\n\n\n3\n0.408478\n00:00\n\n\n4\n0.367309\n00:00\n\n\n5\n0.339710\n00:00\n\n\n6\n0.323739\n00:00\n\n\n7\n0.314110\n00:00\n\n\n8\n0.276853\n00:00\n\n\n9\n0.240247\n00:00\n\n\n\n\n\n\nacc = learn.validate(dl=TfmdDL(perturbed_dsets))[1]\ntest(acc, .9, ge)\n\n\n\n\n\nlearn.show_results(shuffle=False, dl=TfmdDL(perturbed_dsets))"
+  }
+]

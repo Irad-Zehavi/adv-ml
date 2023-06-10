@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.361">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Attacks against classification models that construct special inputs (a.k.a AEs- adversarial examples) that appear natural to a human but are misclassified by the model">
+
+<title>adv-ml - Evasion</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="adv-ml - Evasion">
+<meta property="og:description" content="Attacks against classification models that construct special inputs (a.k.a AEs- adversarial examples) that appear natural to a human but are misclassified by the model">
+<meta property="og:image" content="https://Irad-Zehavi.github.io/adv-ml/evasion_files/figure-html/cell-10-output-2.png">
+<meta property="og:site-name" content="adv-ml">
+<meta property="og:image:height" content="756">
+<meta property="og:image:width" content="716">
+<meta name="twitter:title" content="adv-ml - Evasion">
+<meta name="twitter:description" content="Attacks against classification models that construct special inputs (a.k.a AEs- adversarial examples) that appear natural to a human but are misclassified by the model">
+<meta name="twitter:image" content="https://Irad-Zehavi.github.io/adv-ml/evasion_files/figure-html/cell-10-output-2.png">
+<meta name="twitter:image-height" content="756">
+<meta name="twitter:image-width" content="716">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">adv-ml</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools ms-auto">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./evasion.html">Evasion</a></li></ol></nav>
+      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+      </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">adv-ml</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./badnets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Badnets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evasion.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Evasion</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text">Core</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Core/backdoor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Backdoor</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Core/input_optimization.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Input Optimization</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#api" id="toc-api" class="nav-link active" data-scroll-target="#api">API</a>
+  <ul class="collapse">
+  <li><a href="#pgdcallback" id="toc-pgdcallback" class="nav-link" data-scroll-target="#pgdcallback">PGDCallback</a></li>
+  <li><a href="#pgdcallback.rand_init" id="toc-pgdcallback.rand_init" class="nav-link" data-scroll-target="#pgdcallback.rand_init">PGDCallback.rand_init</a></li>
+  <li><a href="#pgdcallback.steepest_descent" id="toc-pgdcallback.steepest_descent" class="nav-link" data-scroll-target="#pgdcallback.steepest_descent">PGDCallback.steepest_descent</a></li>
+  <li><a href="#pgdcallback.project_pert" id="toc-pgdcallback.project_pert" class="nav-link" data-scroll-target="#pgdcallback.project_pert">PGDCallback.project_pert</a></li>
+  </ul></li>
+  <li><a href="#l_infty-norm" id="toc-l_infty-norm" class="nav-link" data-scroll-target="#l_infty-norm"><span class="math inline">\(l_\infty\)</span> Norm</a>
+  <ul class="collapse">
+  <li><a href="#linfpgd" id="toc-linfpgd" class="nav-link" data-scroll-target="#linfpgd">LinfPGD</a></li>
+  <li><a href="#untargeted" id="toc-untargeted" class="nav-link" data-scroll-target="#untargeted">Untargeted</a></li>
+  <li><a href="#targeted" id="toc-targeted" class="nav-link" data-scroll-target="#targeted">Targeted</a></li>
+  </ul></li>
+  <li><a href="#l_2-norm" id="toc-l_2-norm" class="nav-link" data-scroll-target="#l_2-norm"><span class="math inline">\(l_2\)</span> Norm</a>
+  <ul class="collapse">
+  <li><a href="#l2pgd" id="toc-l2pgd" class="nav-link" data-scroll-target="#l2pgd">L2PGD</a></li>
+  <li><a href="#untargeted-1" id="toc-untargeted-1" class="nav-link" data-scroll-target="#untargeted-1">Untargeted</a></li>
+  <li><a href="#targeted-1" id="toc-targeted-1" class="nav-link" data-scroll-target="#targeted-1">Targeted</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/Irad-Zehavi/adv-ml/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Evasion</h1>
+</div>
+
+<div>
+  <div class="description">
+    Attacks against classification models that construct special inputs (a.k.a AEs- adversarial examples) that appear natural to a human but are misclassified by the model
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>While other implementations of AE attacks exist, this one is meant to be as easy, accessible, informative and modular as training model. In fact, this implementation uses <code>fastai</code>’s <code>Learner</code> class, and inherits its functionality, such as the progress bar, the losses table, and even early stopping and lr scheduling.</p>
+<section id="api" class="level2">
+<h2 class="anchored" data-anchor-id="api">API</h2>
+<hr>
+<p><a href="https://github.com/Irad-Zehavi/adv-ml/blob/main/adv_ml/evasion.py#L16" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="pgdcallback" class="level3">
+<h3 class="anchored" data-anchor-id="pgdcallback">PGDCallback</h3>
+<blockquote class="blockquote">
+<pre><code> PGDCallback (epsilon=0.3, rand_init=True)</code></pre>
+</blockquote>
+<p>Implementes Projected Gradient Descent by bounding some <span class="math inline">\(l_p\)</span> norm of the perturbation</p>
+<hr>
+<p><a href="https://github.com/Irad-Zehavi/adv-ml/blob/main/adv_ml/evasion.py#L48" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="pgdcallback.rand_init" class="level3">
+<h3 class="anchored" data-anchor-id="pgdcallback.rand_init">PGDCallback.rand_init</h3>
+<blockquote class="blockquote">
+<pre><code> PGDCallback.rand_init (shape)</code></pre>
+</blockquote>
+<p>Initialize a random perturbation in the <span class="math inline">\(\epsilon\)</span>-ball</p>
+<hr>
+<p><a href="https://github.com/Irad-Zehavi/adv-ml/blob/main/adv_ml/evasion.py#L55" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="pgdcallback.steepest_descent" class="level3">
+<h3 class="anchored" data-anchor-id="pgdcallback.steepest_descent">PGDCallback.steepest_descent</h3>
+<blockquote class="blockquote">
+<pre><code> PGDCallback.steepest_descent ()</code></pre>
+</blockquote>
+<p>Edit the perturbation’s gradient to implement steepest descent</p>
+<hr>
+<p><a href="https://github.com/Irad-Zehavi/adv-ml/blob/main/adv_ml/evasion.py#L62" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="pgdcallback.project_pert" class="level3">
+<h3 class="anchored" data-anchor-id="pgdcallback.project_pert">PGDCallback.project_pert</h3>
+<blockquote class="blockquote">
+<pre><code> PGDCallback.project_pert ()</code></pre>
+</blockquote>
+<p>Project the perturbation to the <span class="math inline">\(\epsilon\)</span>-ball</p>
+<p>In order to demonstrate the attacks, let’s first setup training data and an accurate classifier:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> similarity_learning.<span class="bu">all</span> <span class="im">import</span> <span class="op">*</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>mnist <span class="op">=</span> MNIST()</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>classifier <span class="op">=</span> MLP(<span class="dv">10</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> Learner(mnist.dls(), classifier, metrics<span class="op">=</span>accuracy)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">valid_loss</th>
+<th data-quarto-table-cell-role="th">accuracy</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>0.105063</td>
+<td>0.093810</td>
+<td>0.971000</td>
+<td>00:18</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sub_dsets <span class="op">=</span> mnist.valid.random_sub_dsets(<span class="dv">64</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>acc <span class="op">=</span> learn.validate(dl<span class="op">=</span>sub_dsets.dl())[<span class="dv">1</span>]</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>test(acc, <span class="fl">.9</span>, ge)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+</div>
+<p>For reference, here is what the original input look like:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>learn.show_results(shuffle<span class="op">=</span><span class="va">False</span>, dl<span class="op">=</span>sub_dsets.dl())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="evasion_files/figure-html/cell-10-output-2.png" class="img-fluid"></p>
+</div>
+</div>
+<p>This is enough for an untargeted attack, where we want to make AEs that the classifier misclassifies. In a targeted attack, we require the AEs to be classified as specific classes. To demonstrate that, we’ll construct a version of the data with random labels:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>item2target <span class="op">=</span> {item: <span class="bu">str</span>(random.choice(<span class="bu">range</span>(<span class="dv">10</span>))) <span class="cf">for</span> item <span class="kw">in</span> sub_dsets.items}</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>random_targets <span class="op">=</span> TfmdLists(sub_dsets.items, [item2target.<span class="fu">__getitem__</span>, Categorize()])</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>random_targets_dsets <span class="op">=</span> Datasets(tls<span class="op">=</span>[sub_dsets.tls[<span class="dv">0</span>], random_targets])</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>random_targets_dsets.dl().show_batch()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="evasion_files/figure-html/cell-11-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>Since a targeted attack adds an additional requirement from the perturbation, we should use a bigger epsilon and more iterations.</p>
+</section>
+</section>
+<section id="l_infty-norm" class="level2">
+<h2 class="anchored" data-anchor-id="l_infty-norm"><span class="math inline">\(l_\infty\)</span> Norm</h2>
+<hr>
+<p><a href="https://github.com/Irad-Zehavi/adv-ml/blob/main/adv_ml/evasion.py#L67" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="linfpgd" class="level3">
+<h3 class="anchored" data-anchor-id="linfpgd">LinfPGD</h3>
+<blockquote class="blockquote">
+<pre><code> LinfPGD (epsilon=0.3, rand_init=True)</code></pre>
+</blockquote>
+<p>Implements PGD by bounding the <span class="math inline">\(l_\infty\)</span> norm</p>
+</section>
+<section id="untargeted" class="level3">
+<h3 class="anchored" data-anchor-id="untargeted">Untargeted</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>attack <span class="op">=</span> InputOptimizer(classifier, LinfPGD(epsilon<span class="op">=</span><span class="fl">.15</span>), n_epochs<span class="op">=</span><span class="dv">10</span>, epoch_size<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>perturbed_dsets <span class="op">=</span> attack.perturb(sub_dsets)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>-3.317830</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>-6.035948</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>-7.208374</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>-7.782593</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>-8.100239</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>5</td>
+<td>-8.288338</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>-8.405439</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>7</td>
+<td>-8.480438</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>8</td>
+<td>-8.529491</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>9</td>
+<td>-8.561683</td>
+<td>00:00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>acc <span class="op">=</span> learn.validate(dl<span class="op">=</span>TfmdDL(perturbed_dsets))[<span class="dv">1</span>]</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>test(acc, <span class="fl">.1</span>, le)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>learn.show_results(shuffle<span class="op">=</span><span class="va">False</span>, dl<span class="op">=</span>TfmdDL(perturbed_dsets))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="evasion_files/figure-html/cell-15-output-2.png" class="img-fluid"></p>
+</div>
+</div>
+</section>
+<section id="targeted" class="level3">
+<h3 class="anchored" data-anchor-id="targeted">Targeted</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>attack <span class="op">=</span> InputOptimizer(classifier, LinfPGD(epsilon<span class="op">=</span><span class="fl">.2</span>), targeted<span class="op">=</span><span class="va">True</span>, n_epochs<span class="op">=</span><span class="dv">10</span>, epoch_size<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>perturbed_dsets <span class="op">=</span> attack.perturb(random_targets_dsets)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>2.587283</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>1.211362</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>0.713616</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>0.493275</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>0.380555</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>5</td>
+<td>0.316781</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>0.281744</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>7</td>
+<td>0.262587</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>8</td>
+<td>0.252041</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>9</td>
+<td>0.246094</td>
+<td>00:00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>acc <span class="op">=</span> learn.validate(dl<span class="op">=</span>TfmdDL(perturbed_dsets))[<span class="dv">1</span>]</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>test(acc, <span class="fl">.9</span>, ge)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>learn.show_results(shuffle<span class="op">=</span><span class="va">False</span>, dl<span class="op">=</span>TfmdDL(perturbed_dsets))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="evasion_files/figure-html/cell-18-output-2.png" class="img-fluid"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="l_2-norm" class="level2">
+<h2 class="anchored" data-anchor-id="l_2-norm"><span class="math inline">\(l_2\)</span> Norm</h2>
+<hr>
+<p><a href="https://github.com/Irad-Zehavi/adv-ml/blob/main/adv_ml/evasion.py#L97" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="l2pgd" class="level3">
+<h3 class="anchored" data-anchor-id="l2pgd">L2PGD</h3>
+<blockquote class="blockquote">
+<pre><code> L2PGD (epsilon=0.3, rand_init=True)</code></pre>
+</blockquote>
+<p>Implements PGD by bounding the <span class="math inline">\(l_2\)</span> norm</p>
+</section>
+<section id="untargeted-1" class="level3">
+<h3 class="anchored" data-anchor-id="untargeted-1">Untargeted</h3>
+<p>Note that the <span class="math inline">\(l_2\)</span> norm can be up to <span class="math inline">\(\sqrt{d}\)</span> bigger than the <span class="math inline">\(l_\infty\)</span> norm, where <span class="math inline">\(d\)</span> is the dimension, so we need to use a bigger epsilon to obtain similar results:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>attack <span class="op">=</span> InputOptimizer(classifier, L2PGD(epsilon<span class="op">=</span><span class="dv">15</span>), n_epochs<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>perturbed_dsets <span class="op">=</span> attack.perturb(sub_dsets)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>-3.854619</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>-4.788039</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>-5.098700</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>-5.251333</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>-5.340628</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>5</td>
+<td>-5.398513</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>-5.437977</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>7</td>
+<td>-5.466318</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>8</td>
+<td>-5.487265</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>9</td>
+<td>-5.503058</td>
+<td>00:00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>acc <span class="op">=</span> learn.validate(dl<span class="op">=</span>TfmdDL(perturbed_dsets))[<span class="dv">1</span>]</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>test(acc, <span class="fl">.1</span>, le)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>learn.show_results(shuffle<span class="op">=</span><span class="va">False</span>, dl<span class="op">=</span>TfmdDL(perturbed_dsets))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="evasion_files/figure-html/cell-22-output-2.png" class="img-fluid"></p>
+</div>
+</div>
+</section>
+<section id="targeted-1" class="level3">
+<h3 class="anchored" data-anchor-id="targeted-1">Targeted</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>attack <span class="op">=</span> InputOptimizer(classifier, L2PGD(epsilon<span class="op">=</span><span class="dv">25</span>), targeted<span class="op">=</span><span class="va">True</span>, n_epochs<span class="op">=</span><span class="dv">10</span>, epoch_size<span class="op">=</span><span class="dv">20</span>,)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>perturbed_dsets <span class="op">=</span> attack.perturb(random_targets_dsets)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>1.122446</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>0.638857</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>0.481712</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>0.408478</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>0.367309</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>5</td>
+<td>0.339710</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>0.323739</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>7</td>
+<td>0.314110</td>
+<td>00:00</td>
+</tr>
+<tr class="odd">
+<td>8</td>
+<td>0.276853</td>
+<td>00:00</td>
+</tr>
+<tr class="even">
+<td>9</td>
+<td>0.240247</td>
+<td>00:00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>acc <span class="op">=</span> learn.validate(dl<span class="op">=</span>TfmdDL(perturbed_dsets))[<span class="dv">1</span>]</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>test(acc, <span class="fl">.9</span>, ge)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>learn.show_results(shuffle<span class="op">=</span><span class="va">False</span>, dl<span class="op">=</span>TfmdDL(perturbed_dsets))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="evasion_files/figure-html/cell-25-output-2.png" class="img-fluid"></p>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
